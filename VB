@@ -1,0 +1,138 @@
+from itertools import repeat
+import datetime
+import webbrowser
+import speech_recognition as sr
+import random
+from gtts import gTTS
+import os
+import time
+from mutagen.mp3 import MP3
+
+greetings = ['hey there', 'hello', 'hi', 'Hai', 'hey!', 'hey']
+question = ['how are you', 'how are you doing']
+responses = ['Okay just tired of life', "I'm fine thank you"]
+q = ['do you love me']
+love = ['Kien love you from the bottom of his heart']
+old = ['how old are you']
+var = ['Old enough to be by your side']
+var1 = ['who made you', 'who created you']
+var2 = ['I was created by Kien right in his computer.', 'Phan Sy Kien', 'Some guy whom i never got to know.']
+var3 = ['what time is it', 'what is the time', 'time']
+var4 = ['who are you', 'what is you name']
+cmd1 = ['open browser', 'open google']
+cmd2 = ['play music', 'play songs', 'play a song', 'open music player']
+cmd3 = ['tell a joke', 'tell me a joke', 'say something funny', 'tell something funny']
+jokes = ['Can a kangaroo jump higher than a house? Of course, a house doesnt jump at all.',
+         'My dog used to chase people on a bike a lot. It got so bad, finally I had to take his bike away.',
+         'Doctor: Im sorry but you suffer from a terminal illness and have only 10 to live.Patient: What do you mean, 10? 10 what? Months? Weeks?!"Doctor Nine.']
+cmd4 = ['open youtube', 'i want to watch a video']
+cmd5 = ['tell me the weather', 'weather', 'what about the weather']
+cmd6 = ['exit', 'close', 'goodbye', 'nothing']
+cmd7 = ['what is your color', 'what is your colour', 'your color', 'your color?']
+colrep = ['Right now its rainbow', 'Right now its transparent', 'Right now its non chromatic']
+cmd8 = ['what is you favourite colour', 'what is your favourite color']
+cmd9 = ['thank you']
+
+repfr9 = ['youre welcome', 'glad i could help you']
+
+
+def recognize_speech_from_mic(recognizer, microphone):
+    """Transcribe speech from recorded from `microphone`.
+    Returns a dictionary with three keys:
+    "success": a boolean indicating whether or not the API request was
+               successful
+    "error":   `None` if no error occured, otherwise a string containing
+               an error message if the API could not be reached or
+               speech was unrecognizable
+    "transcription": `None` if speech could not be transcribed,
+               otherwise a string containing the transcribed text
+    """
+    # check that recognizer and microphone arguments are appropriate type
+    if not isinstance(recognizer, sr.Recognizer):
+        raise TypeError("`recognizer` must be `Recognizer` instance")
+
+    if not isinstance(microphone, sr.Microphone):
+        raise TypeError("`microphone` must be `Microphone` instance")
+
+    # adjust the recognizer sensitivity to ambient noise and record audio
+    # from the microphone
+    with microphone as source:
+        recognizer.adjust_for_ambient_noise(source)  # #  analyze the audio source for 1 second
+        audio = recognizer.listen(source)
+
+    # set up the response object
+    response = {
+        "success": True,
+        "error": None,
+        "transcription": None,
+        "reply": None
+    }
+
+    # try recognizing the speech in the recording
+    # if a RequestError or UnknownValueError exception is caught,
+    #   update the response object accordingly
+    try:
+        response["transcription"] = recognizer.recognize_google(audio)
+        now = datetime.datetime.now()
+        if response["transcription"] in greetings:
+            response["reply"] = random.choice(greetings)
+        elif response["transcription"] in question:
+            response["reply"] = random.choice(responses)
+        elif response["transcription"] in var1:
+            response["reply"] = random.choice(var2)
+        elif response["transcription"] in var3:
+            response["reply"] = now.strftime("The time is %H:%M")
+        elif response["transcription"] in cmd3:
+            response["reply"] = random.choice(jokes)
+        elif response["transcription"] in cmd3:
+            response["reply"] = random.choice(jokes)
+        elif response["transcription"] in old:
+            response["reply"] = random.choice(var)
+        elif response["transcription"] in q:
+            response["reply"] = random.choice(love)
+    except sr.RequestError:
+
+        # API was unreachable or unresponsive
+        response["success"] = False
+        response["error"] = "API unavailable/unresponsive"
+    except sr.UnknownValueError:
+        # speech was unintelligible
+        response["error"] = "Unable to recognize speech"
+
+    return response
+
+from playsound import playsound
+voice = 'male'
+def textToSpeech(mytext, voice):
+    if(voice == "female"):
+        language = 'en'
+        myobj = gTTS(text=mytext, lang=language, slow=False)
+        myobj.save("welcome.mp3")
+        audio = MP3("welcome.mp3")
+        playsound('welcome.mp3')
+        time.sleep(audio.info.length)
+    else:
+        import pyttsx
+        engine = pyttsx.init()
+        engine.say(mytext)
+        engine.runAndWait()
+
+
+if __name__ == '__main__':
+    while True:
+        recognizer = sr.Recognizer()
+        mic = sr.Microphone(device_index=1)
+        response = recognize_speech_from_mic(recognizer, mic)
+        print('\nSuccess : {}\nError   : {}\n\nText from Speech\n{}\n\n{}' \
+              .format(response['success'],
+                      response['error'],
+                      '-' * 17,
+                      response['transcription'],
+                      response))
+        print (response["reply"])
+
+        if response["reply"] != None:
+            textToSpeech(response["reply"], voice)
+        elif response["transcription"] != None:
+            textToSpeech("Sorry i don't know how to response to that", voice)
+
